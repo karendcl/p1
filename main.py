@@ -156,13 +156,13 @@ def main():
              "Copie la abreviatura del nombre de la asignatura que le generó")
 
     # File uploader for the completed P1 form
-    uploaded_file = st.file_uploader("Sube tu formulario P1 aquí", type=["xlsx"])
+    uploaded_file = st.file_uploader("Sube tu formulario P1 aquí", type=["xlsx", "xlsm"])
 
     st.write("Paso 3: Complete todas las preguntas a continuación")
 
     carrera = st.selectbox(
         "Seleccione la carrera a la que se imparte",
-        ['Bioligia',
+        ['Biologia',
          'Microbiologia',
          'Bioquimica y Biologia Molecular']
     )
@@ -171,10 +171,10 @@ def main():
     st.markdown("---")
     year = st.selectbox(
         "Seleccione el año en que se imparte la asignatura",
-        ['1er Año',
-         '2do Año',
-         '3er Año',
-         '4to Año']
+        ['1ero',
+         '2do',
+         '3ero',
+         '4to']
     )
 
     st.markdown("---")
