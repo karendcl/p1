@@ -179,8 +179,8 @@ def main():
 
     st.markdown("---")
     asign = st.text_input(
-        "Ingrese la abreviatura del nombre de la asignatura que le generó automaticamente el archivo excel",
-        placeholder="Ejemplo: BIO123"
+        "Copie y pegue aquí la abreviatura del nombre de la asignatura que le generó el libro de Excel llamado P1_generar.xlsm.",
+        placeholder="Ejemplo: Comp"
     )
 
     st.markdown("---")
@@ -237,7 +237,7 @@ Mengano Don Nadie, Como llegar temprano, CP""")
     st.markdown("---")
 
     need_joined = st.checkbox(
-        "Necesito que se unan los grupos de la asignatura para poder impartirla",
+        "Necesidad de unir carreras",
         value=False
     )
     st.markdown("---")
