@@ -67,7 +67,7 @@ def update_admin_excel_file(file_link, carrera, year, asign, semestre, prof, day
         "Nombre corto de la asignatura",
         "Semestre",
         "Nombre de profesores que participan",
-        "Días en que no se peuede impartir la asignatura",
+        "Días en que no se puede impartir la asignatura",
         "Turnos en que no se puede impartir la asignatura",
         "Profesores que participan en otras asignaturas",
         "Actividades al grupo (año) completo",
@@ -199,29 +199,25 @@ def main():
     st.markdown("---")
 
     days_not_available = st.multiselect(
-        "Seleccione los días en que no se puede impartir la asignatura en ningun turno de clase",
+        "Seleccione los días en que no se puede impartir la asignatura en ningún turno de clase",
         ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
     )
     st.markdown("---")
 
     turnos_not_available = st.multiselect(
-        "Seleccione los turnos en los que no se puede impartir la asignatura en ningun dia de la semana",
+        "Seleccione los turnos en los que no se puede impartir la asignatura en ningún dia de la semana",
         ['1ero', '2do', '3ero', '4to', '5to', '6to',]
     )
     st.markdown("---")
 
-    prof_other_subjects = st.text_area(
+    prof_other_subjects = st.text_input(
         """Especifique los nombres, las asignaturas y el tipo de docencia que imparten los profesores que participan en otras asignaturas, siguiendo este patrón:
 Nombre del profesor, Nombre de la otra asignatura, Tipo de docencia que imparte
 El tipo de la docencia debe ser Conf, CP, Sem, LAB, según corresponda.
 
 Por ejemplo si el profesor Fulano De Tal imparte seminarios de otra asignatura y el profesor Mengano Don Nadie imparte conferencias de otra asignatura y también clases prácticas de una tercera, usted debe ponerlos así:
 
-Fulano De Tal, Introducción a los apagones, Sem
-
-Mengano Don Nadie, Introducción al arte de sobrevivir, Conf
-
-Mengano Don Nadie, Como llegar temprano, CP""")
+Fulano De Tal, Introducción a los apagones, Sem; Mengano Don Nadie, Introducción al arte de sobrevivir, Conf; Mengano Don Nadie, Como llegar temprano, CP""")
     st.markdown("---")
 
     act_full_year = st.multiselect(
@@ -243,7 +239,7 @@ Mengano Don Nadie, Como llegar temprano, CP""")
     st.markdown("---")
 
     precendence_conf = st.multiselect(
-        "Seleccione aquellas actividades que deben ser impartidas despues que las conferencias de la semana en curso",
+        "Seleccione aquellas actividades que deben ser impartidas después que las conferencias de la semana en curso",
         ['Seminarios', 'Clases Prácticas', 'Laboratorios']
 
     )
