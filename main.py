@@ -8,7 +8,7 @@ import pandas as pd
 REPO_URL = "https://raw.githubusercontent.com/karendcl/p1/main/"
 GITHUB_TOKEN = st.secrets["github_token"]  # Use Streamlit secrets in production
 REPO_NAME = "karendcl/p1"  # Your repo
-FILE_PATH = "admin.xlsx"  # Path to your excel file
+FILE_PATH = "admin.csv"  # Path to your excel file
 BRANCH = "main"  # Branch to update
 
 def github_commit_file(file_name, content, commit_message, admin=False):
@@ -18,9 +18,9 @@ def github_commit_file(file_name, content, commit_message, admin=False):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{timestamp}_{file_name}" if not admin else file_name
 
-    github_file_path = f"data/{file_name}"
+    github_file_path = f"data/{file_name}" if not admin else file_name
 
-    repo.create_file(
+    ans = repo.create_file(
         path=github_file_path,
         message=commit_message,
         content=content,
@@ -42,13 +42,16 @@ def update_admin_excel_file(file_link, carrera, year, asign, semestre, prof, day
     # This function would contain logic to update the Excel file
     # For example, you could read the JSON data and write it to an Excel file
 
+    g = Github(GITHUB_TOKEN)
+    repo = g.get_repo(REPO_NAME)
+
     time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     file_link = f"{REPO_URL}data/{file_link}"
     carrera = carrera
     year = year
     asign = asign
     semestre = semestre
-    prof = prof.replace(',', '\n')
+    prof = prof
     days_not_available = ', '.join(days_not_available)
     turnos_not_available = ', '.join(turnos_not_available)
     prof_other_subjects = prof_other_subjects
@@ -56,63 +59,60 @@ def update_admin_excel_file(file_link, carrera, year, asign, semestre, prof, day
     need_joined = "Si" if need_joined else "No"
     precendence_conf = ', '.join(precendence_conf)
 
-#         create a record to insert in the admin Excel file
-    record = {
-        "Marca Temporal": time,
-        "Archivo P1": file_link,
-        "Carrera": carrera,
-        "Año": year,
-        "Nombre corto de la asignatura": asign,
-        "Semestre": semestre,
-        "Nombre de profesores que participan": prof,
-        "Días en que no se peuede impartir la asignatura": days_not_available,
-        "Turnos en que no se puede impartir la asignatura": turnos_not_available,
-        "Profesores que participan en otras asignaturas": prof_other_subjects,
-        "Actividades al grupo (año) completo": act_full_year,
-        "Necesidad d eunir carreras": need_joined,
-        "Precedencia de las conferencias en la semana ": precendence_conf
-    }
+    headings = [
+        "Marca Temporal",
+        "Archivo P1",
+        "Carrera",
+        "Año",
+        "Nombre corto de la asignatura",
+        "Semestre",
+        "Nombre de profesores que participan",
+        "Días en que no se peuede impartir la asignatura",
+        "Turnos en que no se puede impartir la asignatura",
+        "Profesores que participan en otras asignaturas",
+        "Actividades al grupo (año) completo",
+        "Necesidad de unir carreras",
+        "Precedencia de las conferencias en la semana "
+    ]
 
-    g = Github(GITHUB_TOKEN)
-    repo = g.get_repo(REPO_NAME)
+    data = [
+        time,
+        file_link,
+        carrera,
+        year,
+        asign,
+        semestre,
+        prof,
+        days_not_available,
+        turnos_not_available,
+        prof_other_subjects,
+        act_full_year,
+        need_joined,
+        precendence_conf
+    ]
+    # Create a DataFrame
+    df = pd.DataFrame([data], columns=headings)
+    existing_file = repo.get_contents(FILE_PATH, ref=BRANCH)
 
-    # Read the existing data from the excel file
+    # Read the existing file
     try:
-        contents = repo.get_contents(FILE_PATH, ref=BRANCH)
-        # Wrap bytes in BytesIO and specify engine
-        excel_data = io.BytesIO(contents.decoded_content)
-        df = pd.read_excel(excel_data, engine='openpyxl')  # or 'xlrd' for older .xls files
-    except Exception as e:
-        print(f"Error reading file: {e}")
-        df = pd.DataFrame()
+        existing_df = pd.read_csv(io.BytesIO(existing_file.decoded_content))
+    except pd.errors.EmptyDataError:
+        # If the file is empty, create an empty DataFrame with the same columns
+        existing_df = pd.DataFrame(columns=headings)
+    # Append the new data
+    updated_df = pd.concat([existing_df, df], ignore_index=True)
 
-    try:
-        # Safely add record (ensure it's a dictionary or DataFrame)
-        if isinstance(record, dict):
-            record_df = pd.DataFrame([record])
-        else:
-            record_df = pd.DataFrame(record)
+    # Convert the DataFrame to CSV
+    csv_buffer = io.StringIO()
+    updated_df.to_csv(csv_buffer, index=False)
+    csv_content = csv_buffer.getvalue()
+    # Commit the updated file back to GitHub
+    commit_message = "Update admin Excel file with new P1 form data"
 
-        df = pd.concat([df, record_df], ignore_index=True)
-
-        # Save to Excel in memory
-        output = io.BytesIO()
-        df.to_excel(output, index=False, engine='openpyxl')
-        updated_excel = output.getvalue()
-
-        # Verify file exists before committing
-        try:
-            repo.get_contents(FILE_PATH, ref=BRANCH)
-            commit_message = "Update admin Excel file with new P1 form data"
-            github_commit_file(FILE_PATH, updated_excel, commit_message, admin=True)
-        except Exception as e:
-            print(f"Error verifying file or committing: {e}")
-            # Handle case where file doesn't exist - might need to create it
-            github_commit_file(FILE_PATH, updated_excel, "Create new admin Excel file", admin=True)
-
-    except Exception as e:
-        print(f"Error processing or saving data: {e}")
-
+    file = github_commit_file(FILE_PATH,
+                       csv_content.encode('utf-8'),
+                       commit_message, admin=True)
 
 
 
@@ -129,7 +129,6 @@ def upload_p1_form(uploaded_file):
 
     commit_message = f"Upload P1 form: {uploaded_file.name}"
     gh_file_path = github_commit_file(uploaded_file.name, file_content, commit_message, admin=False)
-    print(f"File uploaded to GitHub: {gh_file_path}")
     return gh_file_path
 
 
@@ -256,8 +255,6 @@ Mengano Don Nadie, Como llegar temprano, CP""")
         if uploaded_file is None or not asign or not prof:
             st.error("Por favor, complete todos los campos requeridos antes de enviar el formulario.")
         else:
-            st.success("Formulario enviado con éxito. Gracias por su participación.")
-            # Upload the P1 form
             p1_form = upload_p1_form(uploaded_file)
             # Update the admin Excel file
             update_admin_excel_file(
@@ -266,6 +263,7 @@ Mengano Don Nadie, Como llegar temprano, CP""")
                 prof_other_subjects, act_full_year,
                 need_joined, precendence_conf
             )
+            st.success("Formulario P1 enviado exitosamente y archivo de administración actualizado. Gracias!")
 
 
 
