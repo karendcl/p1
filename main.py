@@ -79,23 +79,37 @@ def update_admin_excel_file(file_link, carrera, year, asign, semestre, prof, day
     # Read the existing data from the excel file
     try:
         contents = repo.get_contents(FILE_PATH, ref=BRANCH)
-        df = pd.read_excel(contents.decoded_content)
+        # Wrap bytes in BytesIO and specify engine
+        excel_data = io.BytesIO(contents.decoded_content)
+        df = pd.read_excel(excel_data, engine='openpyxl')  # or 'xlrd' for older .xls files
     except Exception as e:
         print(f"Error reading file: {e}")
         df = pd.DataFrame()
 
     try:
-        # Use pd.concat() instead of append() which is deprecated
-        df = pd.concat([df, pd.DataFrame([record])], ignore_index=True)
+        # Safely add record (ensure it's a dictionary or DataFrame)
+        if isinstance(record, dict):
+            record_df = pd.DataFrame([record])
+        else:
+            record_df = pd.DataFrame(record)
 
-        # Save the updated DataFrame to an Excel file in memory
+        df = pd.concat([df, record_df], ignore_index=True)
+
+        # Save to Excel in memory
         output = io.BytesIO()
-        df.to_excel(output, index=False)
+        df.to_excel(output, index=False, engine='openpyxl')
         updated_excel = output.getvalue()
 
-        # Commit the updated Excel file to GitHub
-        commit_message = "Update admin Excel file with new P1 form data"
-        github_commit_file(FILE_PATH, updated_excel, commit_message, admin=True)
+        # Verify file exists before committing
+        try:
+            repo.get_contents(FILE_PATH, ref=BRANCH)
+            commit_message = "Update admin Excel file with new P1 form data"
+            github_commit_file(FILE_PATH, updated_excel, commit_message, admin=True)
+        except Exception as e:
+            print(f"Error verifying file or committing: {e}")
+            # Handle case where file doesn't exist - might need to create it
+            github_commit_file(FILE_PATH, updated_excel, "Create new admin Excel file", admin=True)
+
     except Exception as e:
         print(f"Error processing or saving data: {e}")
 
