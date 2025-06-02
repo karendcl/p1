@@ -148,7 +148,7 @@ def main():
     st.write("Paso 1: Descargue el siguiente archivo excel y complete su formulario P1")
 
     # Provide a link to download the Excel file
-    path = REPO_URL + "P1_Generar_pru.xlsm"
+    path = REPO_URL + "P1_Generar.xlsm"
     st.markdown(f"[Download File P1_Generar]({path})", unsafe_allow_html=True)
 
     # Display instructions for filling out the form
